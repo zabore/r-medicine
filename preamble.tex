@@ -1,0 +1,21 @@
+\usecolortheme{dove} % change to a black color theme
+
+\graphicspath{{./img/}} % set path for image files
+
+% make a new command to create itemized lists with checkboxes
+\newcommand{\checkbox}{\text{\fboxsep=-.15pt\fbox{\rule{0pt}{1.5ex}\rule{1.5ex}{0pt}}}}
+
+% change the default itemized list shape to circle
+\setbeamertemplate{itemize item}[circle]
+
+% include logos on the title page
+\titlegraphic{\begin{figure}
+   \includegraphics[width=0.33\textwidth]{MSKlogo2}
+   \hspace{2cm}
+   \includegraphics[width=0.33\textwidth]{mailman_biostats_4c}
+\end{figure}}
+
+% include page numbers
+\setbeamertemplate{footline}[frame number]
+
+\usepackage{hyperref} % for links
