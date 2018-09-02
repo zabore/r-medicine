@@ -1,2 +1,1 @@
-# rmedicine
-materials for my R/Medicine talk
+### Materials for presentation at the R/Medicine conference
