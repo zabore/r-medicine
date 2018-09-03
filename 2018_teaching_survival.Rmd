@@ -43,6 +43,26 @@ Strategies for conveying important information about survival analysis:
 \end{itemize}
 
 
+## Example of a dataset with censored data for a clinical application
+
+The `lung` dataset is available from the `survival` package in `R`. The data contain subjects with advanced lung cancer from the North Central Cancer Treatment Group.
+
+Variable descriptions, from the documentation:
+
+\begin{itemize}
+\item inst:	Institution code
+\item \only<2>{\textcolor{blue}}{time:	Survival time in days}
+\item \only<3>{\textcolor{blue}}{status:	censoring status 1=censored, 2=dead}
+\item age: Age in years
+\item sex: Male=1 Female=2
+\item ph.ecog: ECOG performance score (0=good 5=dead)
+\item ph.karno:	Karnofsky performance score (bad=0-good=100) rated by physician
+\item pat.karno: Karnofsky performance score as rated by patient
+\item meal.cal: Calories consumed at meals
+\item wt.loss: Weight loss in last six months
+\end{itemize}
+
+
 ## Censoring can be straightforward to understand in the context of a clinical trial
 
 \begin{center}
@@ -52,26 +72,6 @@ Strategies for conveying important information about survival analysis:
 \bigskip
 
 \tiny{RICH JT, NEELY JG, PANIELLO RC, VOELKER CCJ, NUSSENBAUM B, WANG EW. A PRACTICAL GUIDE TO UNDERSTANDING KAPLAN-MEIER CURVES. Otolaryngology head and neck surgery: official journal of American Academy of Otolaryngology Head and Neck Surgery. 2010;143(3):331-336. doi:10.1016/j.otohns.2010.05.007.}
-
-
-## Example of a dataset with censored data for a clinical application
-
-The `lung` dataset is available from the `survival` package in `R`. The data contain subjects with advanced lung cancer from the North Central Cancer Treatment Group.
-
-Variable descriptions, from the documentation:
-
-\begin{itemize}
-\item inst:	Institution code
-\item time:	Survival time in days
-\item status:	censoring status 1=censored, 2=dead
-\item age: Age in years
-\item sex: Male=1 Female=2
-\item ph.ecog: ECOG performance score (0=good 5=dead)
-\item ph.karno:	Karnofsky performance score (bad=0-good=100) rated by physician
-\item pat.karno: Karnofsky performance score as rated by patient
-\item meal.cal: Calories consumed at meals
-\item wt.loss: Weight loss in last six months
-\end{itemize}
 
 
 ## In retrospective data follow-up time is not fixed, but censoring still occurs
@@ -96,7 +96,7 @@ ggsave("./img/hist_futime.png", hist_futime, width = 3.5, height = 3.5)
   \begin{column}{0.4\linewidth}
     \begin{itemize}
       \setlength\itemsep{1em}
-      \item Censored subjects have unknown event times (died or withdrew before transplant, tranplant-free at end of study period)
+      \item Censored subjects had not yet died at date of data extraction
       \item Censored subjects still provide information
       \item The distribution of follow-up times is skewed
     \end{itemize}
@@ -202,9 +202,13 @@ x_year_est <- ggsurvplot(data = lung,
 x_year_est$plot <- x_year_est$plot + 
   geom_segment(x = 365.25, xend = 365.25, y = -0.05, yend = 0.4092416, 
                col = msk_palette("main")[4], size = 1.5) +
-  geom_segment(x = 365.25, xend = -45, y = 0.4092416, yend = 0.4092416, 
+  geom_segment(x = 365.25, xend = -40, y = 0.4092416, yend = 0.4092416, 
                col = msk_palette("main")[4], size = 1.5, 
-               arrow = arrow(length = unit(0.2, "inches"))) 
+               arrow = arrow(length = unit(0.2, "inches"))) +
+  annotate("text", x = 0, y = 0.25, 
+           label = glue::glue("The 1-year survival \n probability is ", 
+                              "{round(est_1_year, 2)}."), 
+           col = msk_palette("main")[4], hjust = 0, fontface = 2)
 
 ggsave("./img/x_year_est.png", print(x_year_est), width = 5, height = 4.5)
 ```
@@ -213,7 +217,7 @@ ggsave("./img/x_year_est.png", print(x_year_est), width = 5, height = 4.5)
 \includegraphics[scale = 0.5]{x_year_est}
 \end{center}
 
-An annotated survival plot can help show that it is the probability on the y-axis corresponding to 1-year on the x-axis.
+An annotated survival plot with reproducible text output using the `glue` package can help show that it is the probability on the y-axis corresponding to 1-year on the x-axis.
 
 
 ## Additionally include reproducible text with the image to make sure numbers are being correctly interpreted
@@ -229,11 +233,12 @@ glue::glue_data(summary(fit1, times = 365.25),
                 "The survival probability at 1-year is ", 
                 "{round(surv, 2)} ", 
                 "(95% CI: ", "{round(lower, 2)} - ", "{round(upper, 2)}", 
-                ").")
+                "), which represents the proportion of ",
+                "patients who survived beyond 1 year.")
 ```
 
 
-## Question from collaborator: What is the median survival time?
+## Question from collaborator: What is the meaning of median survival time?
 
 ```{r}
 median_est <- ggsurvplot(data = lung, 
@@ -251,7 +256,11 @@ median_est$plot <- median_est$plot +
                col = msk_palette("main")[4], size = 1.5) +
   geom_segment(x = 310, xend = 310, y = 0.5, yend = -0.03, 
                col = msk_palette("main")[4], size = 1.5, 
-               arrow = arrow(length = unit(0.2, "inches"))) 
+               arrow = arrow(length = unit(0.2, "inches"))) +
+  annotate("text", x = 0, y = 0.25, label = glue::glue(
+    "The median survival \n time is ", 
+    "{round(summary(fit1)$table['median'], 2)} days."), 
+           col = msk_palette("main")[4], hjust = 0, fontface = 2)
 
 ggsave("./img/median_est.png", print(median_est), width = 5, height = 4.5)
 ```
@@ -321,7 +330,9 @@ wrong_median$plot <- wrong_median$plot +
                col = msk_palette("contrast")[9], lwd = 1.2, lty = 2) +
   geom_segment(x = 226, xend = 226, y = 0.5, yend = -0.03, 
                col = msk_palette("contrast")[9], lwd = 1.2, 
-               arrow = arrow(length = unit(0.2, "inches")))
+               arrow = arrow(length = unit(0.2, "inches"))) +
+  annotate("text", x = 300, y = 0.7, label = "Median survival time is \n underestimated when \n censoring is ignored.", 
+           col = msk_palette("contrast")[9], hjust = 0, fontface = 2)
 
 ggsave("./img/wrong_median.png", wrong_median$plot, width = 5, height = 4)
 ```
@@ -337,10 +348,10 @@ This graphical example compares the true survival curve in \textcolor{blue}{blue
 
 \begin{itemize}
   \setlength\itemsep{1em}
-  \item The \textcolor{purple}{purple} group ignores censored subjects. This is equivalent to a naive estimate of median time to death among subjects who diead, which is $226$ days.
+  \item The \textcolor{purple}{purple} group ignores censored subjects. This is equivalent to a naive estimate of median time to death among subjects who died, which is $226$ days.
     \item The \textcolor{blue}{blue} group includes the censored subjects. The median survival time is clearly longer, at $310$ days.
     \item This occurs because the censored subjects do contribute information toward calculation of median survival time.
-    \item Even though we don't know \textbf{exactly} these patients died, we know they died \textbf{after} the time of censoring.
+    \item Even though we don't know \textbf{exactly} when these patients died, we know they died \textbf{after} the time of censoring.
   \end{itemize}
 
 
@@ -369,7 +380,7 @@ median_nr <- ggsurvplot(data = lung,
 median_nr$plot <- median_nr$plot + 
   geom_segment(x = -45, xend = 1022, y = 0.5, yend = 0.5,
                col = msk_palette("main")[4], lwd = 1.2) +
-  annotate("text", x = 36, y = 0.55, label = "Median", 
+  annotate("text", x = 45, y = 0.55, label = "Median", 
            col = msk_palette("main")[4], size = 5)
 
 ggsave("./img/median_nr.png", median_nr$plot, width = 5, height = 3.5)
@@ -411,13 +422,29 @@ A simple example can help. We conduct a study comparing recurrence rates between
 \end{itemize}
 
 
+## Useful R packages 
+
+\begin{itemize}
+\item survival
+\item survminer
+\item ggplot2
+\item glue
+\item rmarkdown
+\item knitr
+\end{itemize}
+
+\begin{center}
+\includegraphics[scale=0.15]{hex}
+\end{center}
+
+
 ## Thank you
 
 Slides available at: \url{https://github.com/zabore/r-medicine}
 
 \bigskip
 
-\includegraphics[scale = 0.8]{contact}
+\includegraphics[scale = 0.7]{contact}
 
 
 
