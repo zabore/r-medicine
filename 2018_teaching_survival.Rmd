@@ -40,8 +40,8 @@ Strategies for conveying important information about survival analysis:
 \begin{itemize}
   \setlength\itemsep{1em}
   \item[\checkbox] Be ready with \textbf{examples} to explain complex ideas
-  \item[\checkbox] Use detailed \textbf{graphics} alongside the examples
-  \item[\checkbox] Accompany numbers such as p-values and hazard ratios with detailed \textbf{explanations}
+  \item[\checkbox] Use detailed \textbf{graphics} to convey information
+  \item[\checkbox] Accompany numbers such as p-values and hazard ratios with detailed \textbf{interpretations}
 \end{itemize}
 
 
@@ -70,6 +70,8 @@ Variable descriptions, from the documentation:
 
 ## The Kaplan-Meier survival function forms the basis of most survival analyses
 
+Using the `ggsurvplot` function from the `survminer` package:
+
 ```{r, message = FALSE}
 fit1 <- survfit(Surv(time, status) ~ 1, data = lung)
 
@@ -93,12 +95,19 @@ ggsave("./img/surv_curve.png", print(surv_curve), width = 6, height = 4.5)
 
 ## Conveying the basics of a survival curve is essential to good communication with collaborators
 
+Describe what is on the plot:
+
 \begin{itemize}
   \setlength\itemsep{1em}
   \item The x-axis is time and the y-axis is the survival function
-  \item The survival function is calculated at each time as the ratio of subjects who did not experience the event by that time to the total number of subjects still at risk at that time
   \item Step function where each step down represents a time at which one or more events occurred
   \item Censored subjects are usually denoted by tick marks
+\end{itemize}
+
+Give a basic description of the underlying calculations:
+\begin{itemize}
+  \setlength\itemsep{1em}
+  \item The survival function is calculated at each time as the ratio of subjects who did not experience the event by that time to the total number of subjects still at risk at that time
 \end{itemize}
 
 
@@ -169,7 +178,7 @@ ggsave("./img/surv_curve_sq.png", surv_curve_sq$plot, width = 3.5,
   \begin{column}{0.4\linewidth}
   \begin{itemize}
   \setlength\itemsep{1em}
-    \item[] In the lung data this would lead to an estimate of survival probability at the end of the study of $1 - \frac{165}{228} = 0.28$.
+    \item[] In the \texttt{lung} data this would lead to an estimate of survival probability at the end of the study of $1 - \frac{165}{228} = 0.28$.
     \item[] But this is \textbf{incorrect}. 
     \item[] Why?
   \end{itemize}
@@ -211,7 +220,7 @@ ggsave("./img/wrong_pct.png", wrong_pct$plot, width = 3.5, height = 3.5)
   \setlength\itemsep{1em}
     \item[] Imagine two studies, each with 228 subjects. 
     \item[] There are 165 deaths in each study. 
-    \item[] The \textcolor{orange}{orange} study has no censoring during follow-up, the \textcolor{blue}{blue} study has subjects censored throughout (the true `lung` data).
+    \item[] The \textcolor{orange}{orange} study has no censoring during follow-up, the \textcolor{blue}{blue} study has subjects censored throughout (the true lung data).
   \end{itemize}
   \end{column}
 \end{columns}
@@ -245,8 +254,8 @@ ggsave("./img/wrong_pct.png", wrong_pct$plot, width = 3.5, height = 3.5)
   \begin{column}{0.4\linewidth}
   \begin{itemize}
   \setlength\itemsep{1em}
-    \item[] The \textcolor{blue}{blue} group has 63 subjects censored during follow-up. Still $165$ subjects died
-    \item[] But the \textcolor{blue}{blue} curve is clearly lower than the \textcolor{orange}{orange} curve, especially at the end 
+    \item[] The \textcolor{blue}{blue} group has $63$ subjects censored during follow-up. Still $165$ subjects died.
+    \item[] The \textcolor{blue}{blue} curve is clearly lower than the \textcolor{orange}{orange} curve, especially at the end.
     \item[] The survival probability at end of study = something $<0.28$ (actually $0.005$)
   \end{itemize}
   \end{column}
@@ -280,7 +289,7 @@ est_1_year <- summary(fit1, times = 365.25)$surv
   \begin{column}{0.4\linewidth}
   \begin{itemize}
   \setlength\itemsep{1em}
-    \item[] In the lung data the 1-year survival probability is `r round(est_1_year, 2)`
+    \item[] In the \texttt{lung} data the 1-year survival probability is `r round(est_1_year, 2)`
     \item[] But where does this number come from?
     \item[] And what does it mean?
   \end{itemize}
@@ -309,7 +318,11 @@ ggsave("./img/x_year_est_1.png", x_year_est_1$plot, width = 3.5, height = 3)
   \end{column}
   
   \begin{column}{0.4\linewidth}
-  The 1-year survival probability is the \textbf{probability on the y-axis} corresponding to \textbf{1-year on the x-axis}
+  \begin{itemize}
+  \setlength\itemsep{1em}
+    \item[] The 1-year survival probability is the \textbf{probability on the y-axis} corresponding to \textbf{1-year on the x-axis}
+    \item[] The \texttt{geom\_segment} function from \texttt{ggplot2} can help with this
+  \end{itemize}
   \end{column}
 \end{columns}
 
@@ -334,7 +347,7 @@ ggsave("./img/x_year_est_2.png", x_year_est_2$plot, width = 3.5, height = 3)
   \end{column}
   
   \begin{column}{0.4\linewidth}
-The glue function from the glue package provides an easy way to reproducibly annotate plots
+The \texttt{glue} function from the \texttt{glue} package provides an easy way to reproducibly annotate plots
   \end{column}
 \end{columns}
 
@@ -393,7 +406,7 @@ est_median <- summary(fit1)$table["median"]
   \begin{column}{0.4\linewidth}
   \begin{itemize}
   \setlength\itemsep{1em}
-    \item[] In the lung data the median survival time is `r round(est_median, 1)` days
+    \item[] In the \texttt{lung} data the median survival time is `r round(est_median, 1)` days
     \item[] But where does this number come from?
     \item[] And what does it mean?
   \end{itemize}
@@ -447,7 +460,7 @@ ggsave("./img/median_est_2.png", median_est_2$plot, width = 3.5, height = 3)
   \end{column}
   
   \begin{column}{0.4\linewidth}
-We again use the glue function from the glue package to annotate our plot with reproducible text
+We again use the \texttt{glue} function from the \texttt{glue} package to annotate our plot with reproducible text
   \end{column}
 \end{columns}
 
@@ -456,12 +469,13 @@ We again use the glue function from the glue package to annotate our plot with r
 
 \small
 
-First define the `survfit` `summary` object:
+First define the `survfit` `summary` object, using the `survival` package:
 
 \scriptsize
 
 ```{r echo = TRUE}
-fit1 <- survfit(Surv(time, status) ~ 1, data = lung) 
+fit1 <- survival::survfit(survival::Surv(time, status) ~ 1, 
+                          data = lung) 
 res <- summary(fit1)$table
 ```
 
@@ -476,7 +490,7 @@ round(res["0.95UCL"])` ``), which represents the estimated point in time that ha
 
 On knitting this will print our desired description:
 
-The median survival time is `r round(res["median"])` days (95% CI: `r round(res["0.95LCL"])` - `r round(res["0.95UCL"])`), which represents the estiamted point in time that half of subjects will live beyond.
+The median survival time is `r round(res["median"])` days (95% CI: `r round(res["0.95LCL"])` - `r round(res["0.95UCL"])`), which represents the estimated point in time that half of subjects will live beyond.
 
 
 ## Finally put everything together into a report to our collaborator about the median survival time
@@ -502,7 +516,7 @@ The median survival time is `r round(res["median"])` days (95% CI: `r round(res[
   \begin{column}{0.4\linewidth}
   \begin{itemize}
   \setlength\itemsep{1em}
-    \item[] In the lung data this would lead to an estimate of median survival time of `r summary(lung$time[lung$status == 2])["Median"]` days
+    \item[] In the \texttt{lung} data this would lead to an estimate of median survival time of `r summary(lung$time[lung$status == 2])["Median"]` days.
     \item[] But this is \textbf{incorrect}. 
     \item[] Why?
   \end{itemize}
@@ -551,17 +565,12 @@ This graphical example compares the true survival curve in \textcolor{blue}{blue
 ```{r}
 wrong_median_2 <- wrong_median_1
 
-wrong_median_2$plot <- wrong_median_2$plot + 
-  geom_segment(x = -45, xend = 310, y = 0.5, yend = 0.5,
-               col = msk_palette("main")[5], lwd = 1.2) +
-  geom_segment(x = 310, xend = 310, y = 0.5, yend = -0.03, 
-               col = msk_palette("main")[5], lwd = 1.2, 
-               arrow = arrow(length = unit(0.2, "inches"))) +
+wrong_median_2$plot <- wrong_median_2$plot  +
   geom_segment(x = -45, xend = 226, y = 0.5, yend = 0.5,
-               col = msk_palette("contrast")[9], lwd = 1.2, lty = 2) +
+               col = msk_palette("contrast")[9], lwd = 1.2) +
   geom_segment(x = 226, xend = 226, y = 0.5, yend = -0.03, 
                col = msk_palette("contrast")[9], lwd = 1.2, 
-               arrow = arrow(length = unit(0.2, "inches")))
+               arrow = arrow(length = unit(0.1, "inches")))
 
 ggsave("./img/wrong_median_2.png", wrong_median_2$plot, width = 3.5, 
        height = 3.5)
@@ -584,9 +593,28 @@ ggsave("./img/wrong_median_2.png", wrong_median_2$plot, width = 3.5,
 
 ## Censored subjects contribute information because we know their event occurred after the censoring time
 
+```{r}
+wrong_median_3 <- wrong_median_2
+
+wrong_median_3$plot <- wrong_median_2$plot + 
+  geom_segment(x = -45, xend = 310, y = 0.5, yend = 0.5,
+               col = msk_palette("main")[5], lwd = 1.2) +
+  geom_segment(x = 310, xend = 310, y = 0.5, yend = -0.03, 
+               col = msk_palette("main")[5], lwd = 1.2, 
+               arrow = arrow(length = unit(0.1, "inches"))) +
+  geom_segment(x = -45, xend = 226, y = 0.5, yend = 0.5,
+               col = msk_palette("contrast")[9], lwd = 1.2, lty = 2) +
+  geom_segment(x = 226, xend = 226, y = 0.5, yend = -0.03, 
+               col = msk_palette("contrast")[9], lwd = 1.2, 
+               arrow = arrow(length = unit(0.1, "inches"))) 
+
+ggsave("./img/wrong_median_3.png", wrong_median_3$plot, width = 3.5, 
+       height = 3.5)
+```
+
 \begin{columns}
   \begin{column}{0.6\linewidth}
-    \includegraphics[scale = 0.75]{wrong_median_2}
+    \includegraphics[scale = 0.75]{wrong_median_3}
   \end{column}
   
   \begin{column}{0.4\linewidth}
@@ -632,7 +660,7 @@ ggsave("./img/median_nr_1.png", median_nr_1$plot, width = 3.5, height = 3)
   \begin{column}{0.4\linewidth}
 \begin{itemize}
   \setlength\itemsep{1em}
-    \item Survival curve based on a sample of lung data subjects
+    \item Survival curve based on a sample of \texttt{lung} data subjects
     \item In these data, we would report a median survival time of `r summary(fit4)$table["median"]`
   \end{itemize}
   \end{column}
