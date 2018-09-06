@@ -51,7 +51,10 @@ The `lung` dataset is available from the `survival` package in `R`. The data con
 
 Variable descriptions, from the documentation:
 
+\small
+
 \begin{itemize}
+\setlength\itemsep{0em}
 \item inst:	Institution code
 \item \only<2>{\textcolor{blue}}{time:	Survival time in days}
 \item \only<3>{\textcolor{blue}}{status:	censoring status 1=censored, 2=dead}
@@ -65,10 +68,46 @@ Variable descriptions, from the documentation:
 \end{itemize}
 
 
-## Censoring can be straightforward to understand in the context of a clinical trial
+## The Kaplan-Meier survival function forms the basis of most survival analyses
+
+```{r, message = FALSE}
+fit1 <- survfit(Surv(time, status) ~ 1, data = lung)
+
+surv_curve <- ggsurvplot(data = lung, 
+                         fit = fit1,
+                         xlab = "Months",
+                         palette = msk_palette("main"),
+                         legend = "none",
+                         xscale = 30.4,
+                         break.x.by = 182.4,
+                         risk.table = TRUE,
+                         risk.table.y.text = FALSE)
+
+ggsave("./img/surv_curve.png", print(surv_curve), width = 6, height = 4.5)
+```
 
 \begin{center}
-\includegraphics[scale = 0.4]{trial_anatomy}
+\includegraphics[scale = 0.6]{surv_curve}
+\end{center}
+
+
+## Conveying the basics of a survival curve is essential to good communication with collaborators
+
+\begin{itemize}
+  \setlength\itemsep{1em}
+  \item The x-axis is time and the y-axis is the survival function
+  \item The survival function is calculated at each time as the ratio of subjects who did not experience the event by that time to the total number of subjects still at risk at that time
+  \item Step function where each step down represents a time at which one or more events occurred
+  \item Censored subjects are usually denoted by tick marks
+\end{itemize}
+
+
+## Question from collaborators: What is censoring?
+
+In the context of a clinical trial:
+
+\begin{center}
+\includegraphics[scale = 0.5]{trial_anatomy}
 \end{center}
 
 \bigskip
@@ -76,7 +115,7 @@ Variable descriptions, from the documentation:
 \tiny{RICH JT, NEELY JG, PANIELLO RC, VOELKER CCJ, NUSSENBAUM B, WANG EW. A PRACTICAL GUIDE TO UNDERSTANDING KAPLAN-MEIER CURVES. Otolaryngology head and neck surgery: official journal of American Academy of Otolaryngology Head and Neck Surgery. 2010;143(3):331-336. doi:10.1016/j.otohns.2010.05.007.}
 
 
-## In retrospective data follow-up time is not fixed, but censoring still occurs
+## Question from collaborators: Why do I need specialized methods to analyze time-to-event data?
 
 ```{r message = FALSE}
 hist_futime <- ggplot(lung, aes(x = time, fill = factor(status))) +
@@ -96,55 +135,49 @@ ggsave("./img/hist_futime.png", hist_futime, width = 3.5, height = 3.5)
   \end{column}
   
   \begin{column}{0.4\linewidth}
-    \begin{itemize}
+    \begin{enumerate}
       \setlength\itemsep{1em}
-      \item Censored subjects had not yet died at date of data extraction
-      \item Censored subjects still provide information
+      \item Censored subjects still provide information so must be appropriately included in the analysis
       \item The distribution of follow-up times is skewed
-    \end{itemize}
+      \item[]
+      \item[]
+    \end{enumerate}
   \end{column}
 \end{columns}
 
 
-## Question from collaborator: What is a survival curve?
+## Question from collaborator: Can I report the percentage of events out of the total study population?
 
 ```{r, message = FALSE}
-fit1 <- survfit(Surv(time, status) ~ 1, data = lung)
-
-surv_curve <- ggsurvplot(data = lung, 
+surv_curve_sq <- ggsurvplot(data = lung, 
                          fit = fit1,
                          xlab = "Months",
                          palette = msk_palette("main"),
                          legend = "none",
                          xscale = 30.4,
-                         break.x.by = 182.4,
-                         risk.table = TRUE,
-                         risk.table.y.text = FALSE)
+                         break.x.by = 182.4)
 
-ggsave("./img/surv_curve.png", print(surv_curve), width = 5, height = 4.5)
+ggsave("./img/surv_curve_sq.png", surv_curve_sq$plot, width = 3.5, 
+       height = 3)
 ```
 
-\begin{center}
-\includegraphics[scale = 0.55]{surv_curve}
-\end{center}
-
-The \textbf{Kaplan-Meier survival curve} is fundamental to survival analysis.
-
-
-## The Kaplan-Meier survival function forms the basis of most survival analyses
-
-Some basic facts:
-
-\begin{itemize}
-  \setlength\itemsep{1em}
-  \item The x-axis is time and the y-axis is the survival function
-  \item The survival function is calculated at each time as the ratio of subjects who did not experience the event by that time to the total number of subjects still at risk at that time
-  \item Step function where each step down represents a time at which one or more events occurred
-  \item Censored subjects are usually denoted by tick marks
-\end{itemize}
-
+\begin{columns}
+  \begin{column}{0.6\linewidth}
+    \includegraphics[scale = 0.75]{surv_curve_sq}
+  \end{column}
   
-## Question from collaborator: Can I report the percentage of events out of the total study population?
+  \begin{column}{0.4\linewidth}
+  \begin{itemize}
+  \setlength\itemsep{1em}
+    \item[] In the lung data this would lead to an estimate of survival probability at the end of the study of $1 - \frac{165}{228} = 0.28$.
+    \item[] But this is \textbf{incorrect}. 
+    \item[] Why?
+  \end{itemize}
+  \end{column}
+\end{columns}
+
+
+## It is clear that the survival curve is lower when there is censoring during follow-up
 
 ```{r, message = FALSE}
 fakedata2 <- lung %>% 
@@ -165,64 +198,148 @@ wrong_pct <- ggsurvplot(data = fakedata2,
                          xscale = 30.4,
                          break.x.by = 182.4)
 
-ggsave("./img/wrong_pct.png", wrong_pct$plot, width = 5, height = 4)
+ggsave("./img/wrong_pct.png", wrong_pct$plot, width = 3.5, height = 3.5)
 ```
 
-\begin{center}
-\includegraphics[scale = 0.55]{wrong_pct}
-\end{center}
-
-Imagine two studies, each with 228 subjects. There are 165 deaths in each study. The \textcolor{orange}{orange} study has no censoring during follow-up, the \textcolor{blue}{blue} study includes censored subjects (the true `lung` data).
-
-
-## Ignoring censoring leads to an overestimate of the survival probability
-
-\begin{itemize}
+\begin{columns}
+  \begin{column}{0.6\linewidth}
+    \includegraphics[scale = 0.75]{wrong_pct}
+  \end{column}
+  
+  \begin{column}{0.4\linewidth}
+  \begin{itemize}
   \setlength\itemsep{1em}
-  \item In the \textcolor{orange}{orange} study everyone is followed until the last follow-up time (i.e. no censoring during follow-up). $165/228$ subjects died during that time $\rightarrow$ survival probability at end of study = $1-\frac{165}{228} \times 100 = 28\%$.
-    \item The \textcolor{blue}{blue} group has 63 subjects censored during follow-up. Still $165$ subjects died. 
-    \item But the \textcolor{blue}{blue} curve is clearly lower than the \textcolor{orange}{orange} curve, especially at the end $\rightarrow$ survival probability at end of study = something $<28\%$ (actually $0.05\%$).
-    \item This occurs because the censored subjects only contribute information for \textbf{part} of the follow-up time, and then they \textbf{fall out of the denominator}, thus pulling down the cumulative probability of survival.
+    \item[] Imagine two studies, each with 228 subjects. 
+    \item[] There are 165 deaths in each study. 
+    \item[] The \textcolor{orange}{orange} study has no censoring during follow-up, the \textcolor{blue}{blue} study has subjects censored throughout (the true `lung` data).
   \end{itemize}
+  \end{column}
+\end{columns}
+
+
+## When there is not censoring during follow-up, the survival estimate is straightforward
+
+\begin{columns}
+  \begin{column}{0.6\linewidth}
+    \includegraphics[scale = 0.75]{wrong_pct}
+  \end{column}
+  
+  \begin{column}{0.4\linewidth}
+  \begin{itemize}
+  \setlength\itemsep{1em}
+    \item[] In the \textcolor{orange}{orange} study everyone is followed until the last follow-up time (i.e. no censoring during follow-up). 
+    \item[] The survival probability at last follow-up is \textbf{$0.28$}
+    \item[] This is equivalent to an estimating the raw percent of patients still alive: $1 - \frac{165}{228} = 0.28$
+  \end{itemize}
+  \end{column}
+\end{columns}
+
+
+## When there is censoring during follow-up, a naive estimate will be incorrect
+
+\begin{columns}
+  \begin{column}{0.6\linewidth}
+    \includegraphics[scale = 0.75]{wrong_pct}
+  \end{column}
+  
+  \begin{column}{0.4\linewidth}
+  \begin{itemize}
+  \setlength\itemsep{1em}
+    \item[] The \textcolor{blue}{blue} group has 63 subjects censored during follow-up. Still $165$ subjects died
+    \item[] But the \textcolor{blue}{blue} curve is clearly lower than the \textcolor{orange}{orange} curve, especially at the end 
+    \item[] The survival probability at end of study = something $<0.28$ (actually $0.005$)
+  \end{itemize}
+  \end{column}
+\end{columns}
+
+
+## Ignoring censoring leads to an overestimate of the survival probability at a given time
+
+\begin{columns}
+  \begin{column}{0.6\linewidth}
+    \includegraphics[scale = 0.75]{wrong_pct}
+  \end{column}
+  
+  \begin{column}{0.4\linewidth}
+  This occurs because the censored subjects only contribute information for \textbf{part} of the follow-up time, and then they fall out of the denominator, thus pulling down the cumulative probability of survival.
+  \end{column}
+\end{columns}
 
 
 ## Question from collaborator: What is the 1-year survival probability?
 
 ```{r}
 est_1_year <- summary(fit1, times = 365.25)$surv
+```
 
-x_year_est <- ggsurvplot(data = lung, 
-                         fit = fit1,
-                         xlab = "Months",
-                         palette = msk_palette("main"),
-                         legend = "none",
-                         risk.table = TRUE,
-                         risk.table.y.text = FALSE,
-                         xscale = 30.4,
-                         break.x.by = 182.4)
+\begin{columns}
+  \begin{column}{0.6\linewidth}
+    \includegraphics[scale = 0.75]{surv_curve_sq}
+  \end{column}
+  
+  \begin{column}{0.4\linewidth}
+  \begin{itemize}
+  \setlength\itemsep{1em}
+    \item[] In the lung data the 1-year survival probability is `r round(est_1_year, 2)`
+    \item[] But where does this number come from?
+    \item[] And what does it mean?
+  \end{itemize}
+  \end{column}
+\end{columns}
 
-x_year_est$plot <- x_year_est$plot + 
+
+## We start by showing what the 1-year survival probability is on the survival curve
+
+```{r}
+x_year_est_1 <- surv_curve_sq
+
+x_year_est_1$plot <- x_year_est_1$plot + 
   geom_segment(x = 365.25, xend = 365.25, y = -0.05, yend = 0.4092416, 
                col = msk_palette("main")[4], size = 1.5) +
   geom_segment(x = 365.25, xend = -40, y = 0.4092416, yend = 0.4092416, 
                col = msk_palette("main")[4], size = 1.5, 
-               arrow = arrow(length = unit(0.2, "inches"))) +
-  annotate("text", x = -30, y = 0.25, 
+               arrow = arrow(length = unit(0.2, "inches"))) 
+
+ggsave("./img/x_year_est_1.png", x_year_est_1$plot, width = 3.5, height = 3)
+```
+
+\begin{columns}
+  \begin{column}{0.6\linewidth}
+    \includegraphics[scale = 0.75]{x_year_est_1}
+  \end{column}
+  
+  \begin{column}{0.4\linewidth}
+  The 1-year survival probability is the \textbf{probability on the y-axis} corresponding to \textbf{1-year on the x-axis}
+  \end{column}
+\end{columns}
+
+
+## Next we annotate the plot with text to state the probability alongside the curve
+
+```{r}
+x_year_est_2 <- x_year_est_1
+
+x_year_est_2$plot <- x_year_est_2$plot +
+  annotate("text", x = 450, y = 0.5, 
            label = glue::glue("The 1-year survival \n probability is ", 
                               "{round(est_1_year, 2)}."), 
            col = msk_palette("main")[4], hjust = 0, fontface = 2)
 
-ggsave("./img/x_year_est.png", print(x_year_est), width = 6, height = 4.5)
+ggsave("./img/x_year_est_2.png", x_year_est_2$plot, width = 3.5, height = 3)
 ```
 
-\begin{center}
-\includegraphics[scale = 0.5]{x_year_est}
-\end{center}
+\begin{columns}
+  \begin{column}{0.6\linewidth}
+    \includegraphics[scale = 0.75]{x_year_est_2}
+  \end{column}
+  
+  \begin{column}{0.4\linewidth}
+The glue function from the glue package provides an easy way to reproducibly annotate plots
+  \end{column}
+\end{columns}
 
-An annotated survival plot with reproducible text output using the `glue` package can help show that it is the probability on the y-axis corresponding to 1-year on the x-axis.
 
-
-## Additionally include reproducible text with the image to make sure numbers are being correctly interpreted
+## Additionally create reproducible text to make sure numbers are being correctly interpreted
 
 As part of a reproducible workflow that includes writing reports in `R Markdown`, the `glue_data` function from the `glue` package can easily print reproducible text as a corresponding description:
 
@@ -235,46 +352,107 @@ glue::glue_data(summary(fit1, times = 365.25),
                 "The survival probability at 1-year is ", 
                 "{round(surv, 2)} ", 
                 "(95% CI: ", "{round(lower, 2)} - ", "{round(upper, 2)}", 
-                ")\n, which represents the proportion of ",
-                "patients who survived beyond 1 year.")
+                "),\n which represents the estimated proportion of ",
+                "patients who\n survived beyond 1 year.")
+```
+
+
+## Finally put everything together into a report to our collaborator about the 1-year survival probability
+
+```{r}
+ggsave("./img/x_year_est_3.png", x_year_est_2$plot, width = 5, height = 3.5)
+```
+
+\begin{center}
+    \includegraphics[scale = 0.6]{x_year_est_3}
+\end{center}
+
+\scriptsize
+
+```{r}
+glue::glue_data(summary(fit1, times = 365.25), 
+                "The survival probability at 1-year is ", 
+                "{round(surv, 2)} ", 
+                "(95% CI: ", "{round(lower, 2)} - ", "{round(upper, 2)}", 
+                "),\n which represents the estimated proportion of ",
+                "patients who\n survived beyond 1 year.")
 ```
 
 
 ## Question from collaborator: What is the median survival time?
 
 ```{r}
-median_est <- ggsurvplot(data = lung, 
-                         fit = fit1,
-                         xlab = "Months",
-                         palette = msk_palette("main"),
-                         legend = "none",
-                         risk.table = TRUE,
-                         risk.table.y.text = FALSE,
-                         xscale = 30.4,
-                         break.x.by = 182.4)
-
-median_est$plot <- median_est$plot + 
-  geom_segment(x = -45, xend = 310, y = 0.5, yend = 0.5, 
-               col = msk_palette("main")[4], size = 1.5) +
-  geom_segment(x = 310, xend = 310, y = 0.5, yend = -0.03, 
-               col = msk_palette("main")[4], size = 1.5, 
-               arrow = arrow(length = unit(0.2, "inches"))) +
-  annotate("text", x = -30, y = 0.25, label = glue::glue(
-    "The median survival \n time is ", 
-    "{round(summary(fit1)$table['median'], 2)} days."), 
-           col = msk_palette("main")[4], hjust = 0, fontface = 2)
-
-ggsave("./img/median_est.png", print(median_est), width = 6, height = 4.5)
+est_median <- summary(fit1)$table["median"]
 ```
 
-\begin{center}
-\includegraphics[scale = 0.5]{median_est}
-\end{center}
+\begin{columns}
+  \begin{column}{0.6\linewidth}
+    \includegraphics[scale = 0.75]{surv_curve_sq}
+  \end{column}
+  
+  \begin{column}{0.4\linewidth}
+  \begin{itemize}
+  \setlength\itemsep{1em}
+    \item[] In the lung data the median survival time is `r round(est_median, 1)` days
+    \item[] But where does this number come from?
+    \item[] And what does it mean?
+  \end{itemize}
+  \end{column}
+\end{columns}
 
-The \textbf{median survival time} is the point on the x-axis corresponding to a survival probability of $0.5$ on the y-axis.
+
+## We start by showing what the median survival time is on the survival curve
+
+```{r}
+median_est_1 <- surv_curve_sq
+
+median_est_1$plot <- median_est_1$plot + 
+  geom_segment(x = -45, xend = 310, y = 0.5, yend = 0.5, 
+               col = msk_palette("contrast")[4], size = 1.5) +
+  geom_segment(x = 310, xend = 310, y = 0.5, yend = -0.03, 
+               col = msk_palette("contrast")[4], size = 1.5, 
+               arrow = arrow(length = unit(0.2, "inches")))
+
+ggsave("./img/median_est_1.png", median_est_1$plot, width = 3.5, height = 3)
+```
+
+\begin{columns}
+  \begin{column}{0.6\linewidth}
+    \includegraphics[scale = 0.75]{median_est_1}
+  \end{column}
+  
+  \begin{column}{0.4\linewidth}
+  The median survival time is the \textbf{time on the x-axis} corresponding to a \textbf{survival probability of $\textbf{0.5}$ on the y-axis}.
+  \end{column}
+\end{columns}
 
 
-## Inline R code can also be used to incorporate reproducible text alongside graphical examples
+## Next we annotate the plot with text to state the time estimate alongside the curve
+
+```{r}
+median_est_2 <- median_est_1
+
+median_est_2$plot <- median_est_2$plot +
+  annotate("text", x = 450, y = 0.5, label = glue::glue(
+    "The median survival \n time is ", 
+    "{round(summary(fit1)$table['median'], 2)} days."), 
+           col = msk_palette("contrast")[4], hjust = 0, fontface = 2)
+
+ggsave("./img/median_est_2.png", median_est_2$plot, width = 3.5, height = 3)
+```
+
+\begin{columns}
+  \begin{column}{0.6\linewidth}
+    \includegraphics[scale = 0.75]{median_est_2}
+  \end{column}
+  
+  \begin{column}{0.4\linewidth}
+We again use the glue function from the glue package to annotate our plot with reproducible text
+  \end{column}
+\end{columns}
+
+
+## Inline R code can also be used to incorporate reproducible text into reports alongside graphical examples
 
 \small
 
@@ -291,19 +469,50 @@ res <- summary(fit1)$table
 
 Then:
 
-The median survival time was `` `r
+The median survival time is `` `r
 round(res["median"])` `` days (95% CI: `` `r
 round(res["0.95LCL"])` `` - `` `r
-round(res["0.95UCL"])` ``), which represents the point in time that half of subjects will live beyond.
+round(res["0.95UCL"])` ``), which represents the estimated point in time that half of subjects will live beyond.
 
 On knitting this will print our desired description:
 
-The median survival time was `r round(res["median"])` days (95% CI: `r round(res["0.95LCL"])` - `r round(res["0.95UCL"])`), which represents the point in time that half of subjects will live beyond.
+The median survival time is `r round(res["median"])` days (95% CI: `r round(res["0.95LCL"])` - `r round(res["0.95UCL"])`), which represents the estiamted point in time that half of subjects will live beyond.
+
+
+## Finally put everything together into a report to our collaborator about the median survival time
+
+```{r}
+ggsave("./img/median_est_3.png", median_est_2$plot, width = 5, height = 3.5)
+```
+
+\begin{center}
+    \includegraphics[scale = 0.6]{median_est_3}
+\end{center}
+
+The median survival time is `r round(res["median"])` days (95% CI: `r round(res["0.95LCL"])` - `r round(res["0.95UCL"])`), which represents the estimated point in time that half of subjects will live beyond.
 
 
 ## Question from collaborator: Why can't I just estimate the median among those who had the event?
 
-```{r, message = FALSE}
+\begin{columns}
+  \begin{column}{0.6\linewidth}
+    \includegraphics[scale = 0.75]{surv_curve_sq}
+  \end{column}
+  
+  \begin{column}{0.4\linewidth}
+  \begin{itemize}
+  \setlength\itemsep{1em}
+    \item[] In the lung data this would lead to an estimate of median survival time of `r summary(lung$time[lung$status == 2])["Median"]` days
+    \item[] But this is \textbf{incorrect}. 
+    \item[] Why?
+  \end{itemize}
+  \end{column}
+\end{columns}
+
+
+## The true survival curve falls above a curve excluding the censored subjects
+
+```{r message = FALSE}
 fakedata <- lung %>% 
   filter(status == 2) %>% 
   mutate(group = "Ignoring censoring") %>% 
@@ -311,7 +520,7 @@ fakedata <- lung %>%
 
 fit2 <- survfit(Surv(time, status) ~ group, data = fakedata)
 
-wrong_median <- ggsurvplot(data = fakedata, 
+wrong_median_1 <- ggsurvplot(data = fakedata, 
                          fit = fit2,
                          xlab = "Months",
                          palette = msk_palette("contrast")[c(3, 1)],
@@ -322,7 +531,27 @@ wrong_median <- ggsurvplot(data = fakedata,
                          xscale = 30.4,
                          break.x.by = 182.4)
 
-wrong_median$plot <- wrong_median$plot + 
+ggsave("./img/wrong_median_1.png", wrong_median_1$plot, width = 3.5, 
+       height = 3.5)
+```
+
+\begin{columns}
+  \begin{column}{0.6\linewidth}
+    \includegraphics[scale = 0.75]{wrong_median_1}
+  \end{column}
+  
+  \begin{column}{0.4\linewidth}
+This graphical example compares the true survival curve in \textcolor{blue}{blue}, and the curve excluding censored subjects in \textcolor{purple}{purple}.
+  \end{column}
+\end{columns}
+
+
+## Ignoring censoring leads to an underestimate of the median survival time
+
+```{r}
+wrong_median_2 <- wrong_median_1
+
+wrong_median_2$plot <- wrong_median_2$plot + 
   geom_segment(x = -45, xend = 310, y = 0.5, yend = 0.5,
                col = msk_palette("main")[5], lwd = 1.2) +
   geom_segment(x = 310, xend = 310, y = 0.5, yend = -0.03, 
@@ -332,29 +561,42 @@ wrong_median$plot <- wrong_median$plot +
                col = msk_palette("contrast")[9], lwd = 1.2, lty = 2) +
   geom_segment(x = 226, xend = 226, y = 0.5, yend = -0.03, 
                col = msk_palette("contrast")[9], lwd = 1.2, 
-               arrow = arrow(length = unit(0.2, "inches"))) +
-  annotate("text", x = 300, y = 0.7, label = "Median survival time is\n underestimated when\n censoring is ignored.", 
-           col = msk_palette("contrast")[9], hjust = 0, fontface = 2)
+               arrow = arrow(length = unit(0.2, "inches")))
 
-ggsave("./img/wrong_median.png", wrong_median$plot, width = 5, height = 4)
+ggsave("./img/wrong_median_2.png", wrong_median_2$plot, width = 3.5, 
+       height = 3.5)
 ```
 
-\begin{center}
-\includegraphics[scale = 0.6]{wrong_median}
-\end{center}
-
-This graphical example compares the true survival curve in \textcolor{blue}{blue}, and the curve excluding censored subjects in \textcolor{purple}{purple}.
-
-
-## Ignoring censoring leads to an underestimate of median survival time
-
+\begin{columns}
+  \begin{column}{0.6\linewidth}
+    \includegraphics[scale = 0.75]{wrong_median_2}
+  \end{column}
+  
+  \begin{column}{0.4\linewidth}
 \begin{itemize}
   \setlength\itemsep{1em}
-  \item The \textcolor{purple}{purple} group ignores censored subjects. This is equivalent to a naive estimate of median time to death among subjects who died, which is $226$ days.
-    \item The \textcolor{blue}{blue} group includes the censored subjects. The median survival time is clearly longer, at $310$ days.
-    \item This occurs because the censored subjects do contribute information toward calculation of median survival time.
-    \item Even though we don't know \textbf{exactly} when these patients died, we know they died \textbf{after} the time of censoring.
+  \item The \textcolor{purple}{purple} group ignores censored subjects. 
+  \item This is equivalent to the naive estimate of median time to death \textbf{among subjects who died} of `r summary(lung$time[lung$status == 2])["Median"]` days
   \end{itemize}
+  \end{column}
+\end{columns}
+
+
+## Censored subjects contribute information because we know their event occurred after the censoring time
+
+\begin{columns}
+  \begin{column}{0.6\linewidth}
+    \includegraphics[scale = 0.75]{wrong_median_2}
+  \end{column}
+  
+  \begin{column}{0.4\linewidth}
+\begin{itemize}
+  \setlength\itemsep{1em}
+    \item The \textcolor{blue}{blue} group includes the censored subjects. 
+    \item The median survival time is clearly longer, at $310$ days.
+  \end{itemize}
+  \end{column}
+\end{columns}
 
 
 ## Question from collaborator: What does it mean when you say median survival is not reached?
@@ -370,45 +612,60 @@ sample_data <- lung %>%
   
 fit4 <- survfit(Surv(time, status) ~ 1, data = sample_data)
 
-median_nr <- ggsurvplot(data = lung, 
+median_nr_1 <- ggsurvplot(data = lung, 
                          fit = fit4,
                          xlab = "Months",
-                         palette = msk_palette("main"),
+                         palette = msk_palette("main")[3],
                          legend = "none",
                          xscale = 30.4,
                          break.x.by = 182.4, 
                         conf.int = FALSE)
 
-median_nr$plot <- median_nr$plot + 
-  geom_segment(x = -45, xend = 1022, y = 0.5, yend = 0.5,
-               col = msk_palette("main")[4], lwd = 1.2) +
-  annotate("text", x = 45, y = 0.55, label = "Median", 
-           col = msk_palette("main")[4], size = 5)
-
-ggsave("./img/median_nr.png", median_nr$plot, width = 5, height = 3.5)
+ggsave("./img/median_nr_1.png", median_nr_1$plot, width = 3.5, height = 3)
 ```
 
-\begin{center}
-\includegraphics[scale = 0.6]{median_nr}
-\end{center}
-
-The survival curve must \textbf{cross} the survival probability of $0.5$ before median survival time has been reached.
-
-\scriptsize
-(Survival curve based on a random sample of `lung` data subjects, sampling a proportion of those who died and oversampling censored subjects.)
-
-
-
-## Median survial time is only observed when subjects are followed long enough 
-
-When the median is not reached:
-
+\begin{columns}
+  \begin{column}{0.6\linewidth}
+    \includegraphics[scale = 0.75]{median_nr_1}
+  \end{column}
+  
+  \begin{column}{0.4\linewidth}
 \begin{itemize}
-\item By the end of the study, we have not observed the point in time that half the subjects will survive beyond
-\item Subjects would need to be followed longer, so that more deaths could occur, before we could observe median survival time
-\item Does \textbf{not} mean that the median survival time is greater than the maximum observed time in the study
-\item Usually reported as "not reached" or "NR"
-\end{itemize}
+  \setlength\itemsep{1em}
+    \item Survival curve based on a sample of lung data subjects
+    \item In these data, we would report a median survival time of `r summary(fit4)$table["median"]`
+  \end{itemize}
+  \end{column}
+\end{columns}
+
+
+## The survival curve must cross the survival probability of $0.5$ before median survival time has been reached
+
+```{r}
+median_nr_2 <- median_nr_1
+
+median_nr_2$plot <- median_nr_2$plot + 
+  geom_segment(x = -45, xend = 1022, y = 0.5, yend = 0.5,
+               col = msk_palette("contrast")[5], lwd = 1.2) +
+  annotate("text", x = 90, y = 0.55, label = "Median", 
+           col = msk_palette("contrast")[5], size = 5)
+
+ggsave("./img/median_nr_2.png", median_nr_2$plot, width = 3.5, height = 3)
+```
+
+\begin{columns}
+  \begin{column}{0.6\linewidth}
+    \includegraphics[scale = 0.75]{median_nr_2}
+  \end{column}
+  
+  \begin{column}{0.4\linewidth}
+\begin{itemize}
+  \setlength\itemsep{1em}
+    \item By the end of the study, we have \textbf{not observed} the point in time that half the subjects will survive beyond
+    \item Subjects would need to be followed longer, so that more deaths could occur, before we could observe median survival time
+  \end{itemize}
+  \end{column}
+\end{columns}
 
 
 ## Question from collaborator: What is a hazard ratio?
@@ -424,7 +681,7 @@ A simple example can help. We conduct a study comparing recurrence rates between
 \end{itemize}
 
 
-## Useful R packages 
+## Essential R packages 
 
 \begin{itemize}
 \item survival
