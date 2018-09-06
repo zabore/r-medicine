@@ -7,6 +7,8 @@ output:
   beamer_presentation:
     includes:
       in_header: preamble.tex
+editor_options: 
+  chunk_output_type: console
 ---
 
 
@@ -38,7 +40,7 @@ Strategies for conveying important information about survival analysis:
 \begin{itemize}
   \setlength\itemsep{1em}
   \item[\checkbox] Be ready with \textbf{examples} to explain complex ideas
-  \item[\checkbox] Use detailed \textbf{graphics} to accomplish this
+  \item[\checkbox] Use detailed \textbf{graphics} alongside the examples
   \item[\checkbox] Accompany numbers such as p-values and hazard ratios with detailed \textbf{explanations}
 \end{itemize}
 
@@ -170,17 +172,17 @@ ggsave("./img/wrong_pct.png", wrong_pct$plot, width = 5, height = 4)
 \includegraphics[scale = 0.55]{wrong_pct}
 \end{center}
 
-Imagine two studies, each with 228 subjects. There are 165 deaths in each study. The \textcolor{orange}{orange} study has no censoring, the \textcolor{blue}{blue} study includes censored subjects (the true `lung` data).
+Imagine two studies, each with 228 subjects. There are 165 deaths in each study. The \textcolor{orange}{orange} study has no censoring during follow-up, the \textcolor{blue}{blue} study includes censored subjects (the true `lung` data).
 
 
 ## Ignoring censoring leads to an overestimate of the survival probability
 
 \begin{itemize}
   \setlength\itemsep{1em}
-  \item The \textcolor{orange}{orange} study has no censoring. $165/228$ subjects died $\rightarrow$ survival probability at end of study = $1-\frac{165}{228} \times 100 = 28\%$.
-    \item The \textcolor{blue}{blue} group has 63 subjects censored. Still $165/228$ subjects died. 
+  \item In the \textcolor{orange}{orange} study everyone is followed until the last follow-up time (i.e. no censoring during follow-up). $165/228$ subjects died during that time $\rightarrow$ survival probability at end of study = $1-\frac{165}{228} \times 100 = 28\%$.
+    \item The \textcolor{blue}{blue} group has 63 subjects censored during follow-up. Still $165$ subjects died. 
     \item But the \textcolor{blue}{blue} curve is clearly lower than the \textcolor{orange}{orange} curve, especially at the end $\rightarrow$ survival probability at end of study = something $<28\%$ (actually $0.05\%$).
-    \item This occurs because the censored subjects only contribute information for \textbf{part} of the follow-up time, and then they \textbf{fall out of the denominator}.
+    \item This occurs because the censored subjects only contribute information for \textbf{part} of the follow-up time, and then they \textbf{fall out of the denominator}, thus pulling down the cumulative probability of survival.
   \end{itemize}
 
 
@@ -205,12 +207,12 @@ x_year_est$plot <- x_year_est$plot +
   geom_segment(x = 365.25, xend = -40, y = 0.4092416, yend = 0.4092416, 
                col = msk_palette("main")[4], size = 1.5, 
                arrow = arrow(length = unit(0.2, "inches"))) +
-  annotate("text", x = 0, y = 0.25, 
+  annotate("text", x = -30, y = 0.25, 
            label = glue::glue("The 1-year survival \n probability is ", 
                               "{round(est_1_year, 2)}."), 
            col = msk_palette("main")[4], hjust = 0, fontface = 2)
 
-ggsave("./img/x_year_est.png", print(x_year_est), width = 5, height = 4.5)
+ggsave("./img/x_year_est.png", print(x_year_est), width = 6, height = 4.5)
 ```
 
 \begin{center}
@@ -233,12 +235,12 @@ glue::glue_data(summary(fit1, times = 365.25),
                 "The survival probability at 1-year is ", 
                 "{round(surv, 2)} ", 
                 "(95% CI: ", "{round(lower, 2)} - ", "{round(upper, 2)}", 
-                "), which represents the proportion of ",
+                ")\n, which represents the proportion of ",
                 "patients who survived beyond 1 year.")
 ```
 
 
-## Question from collaborator: What is the meaning of median survival time?
+## Question from collaborator: What is the median survival time?
 
 ```{r}
 median_est <- ggsurvplot(data = lung, 
@@ -257,12 +259,12 @@ median_est$plot <- median_est$plot +
   geom_segment(x = 310, xend = 310, y = 0.5, yend = -0.03, 
                col = msk_palette("main")[4], size = 1.5, 
                arrow = arrow(length = unit(0.2, "inches"))) +
-  annotate("text", x = 0, y = 0.25, label = glue::glue(
+  annotate("text", x = -30, y = 0.25, label = glue::glue(
     "The median survival \n time is ", 
     "{round(summary(fit1)$table['median'], 2)} days."), 
            col = msk_palette("main")[4], hjust = 0, fontface = 2)
 
-ggsave("./img/median_est.png", print(median_est), width = 5, height = 4.5)
+ggsave("./img/median_est.png", print(median_est), width = 6, height = 4.5)
 ```
 
 \begin{center}
@@ -299,7 +301,7 @@ On knitting this will print our desired description:
 The median survival time was `r round(res["median"])` days (95% CI: `r round(res["0.95LCL"])` - `r round(res["0.95UCL"])`), which represents the point in time that half of subjects will live beyond.
 
 
-## Question from collaborator: why can't I just estimate the median among those who had the event?
+## Question from collaborator: Why can't I just estimate the median among those who had the event?
 
 ```{r, message = FALSE}
 fakedata <- lung %>% 
@@ -331,7 +333,7 @@ wrong_median$plot <- wrong_median$plot +
   geom_segment(x = 226, xend = 226, y = 0.5, yend = -0.03, 
                col = msk_palette("contrast")[9], lwd = 1.2, 
                arrow = arrow(length = unit(0.2, "inches"))) +
-  annotate("text", x = 300, y = 0.7, label = "Median survival time is \n underestimated when \n censoring is ignored.", 
+  annotate("text", x = 300, y = 0.7, label = "Median survival time is\n underestimated when\n censoring is ignored.", 
            col = msk_palette("contrast")[9], hjust = 0, fontface = 2)
 
 ggsave("./img/wrong_median.png", wrong_median$plot, width = 5, height = 4)
@@ -355,7 +357,7 @@ This graphical example compares the true survival curve in \textcolor{blue}{blue
   \end{itemize}
 
 
-## Question from collaborator: what does it mean when you say median survival is not reached?
+## Question from collaborator: What does it mean when you say median survival is not reached?
 
 ```{r message = FALSE}
 set.seed(20180902)
@@ -409,7 +411,7 @@ When the median is not reached:
 \end{itemize}
 
 
-## Question from collaborator: what is a hazard ratio?
+## Question from collaborator: What is a hazard ratio?
 
 A \textbf{hazard ratio (HR)} represents the instantaneous chance of the event occurring in one group, divided by the instantaneous chance of the event occurring in the other group.
 
