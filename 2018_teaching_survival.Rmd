@@ -733,8 +733,8 @@ ggsave("./img/haz_plot.png", haz_plot$plot, width = 3.5, height = 3.5)
   \begin{column}{0.4\linewidth}
 \begin{itemize}
   \setlength\itemsep{1em}
-    \item The hazard ratio (HR) represents the difference in hazards between two groups at any particular point in time
-    \item HR = `r round(exp(broom::tidy(cph4)["estimate"]), 2)` comparing male to female with respect to hazard of death in the \texttt{lung} data
+    \item The hazard ratio (HR) represents the ratio of hazards between two groups at any particular point in time
+    \item The hazard of death for males versus females is `r round(exp(broom::tidy(cph4)["estimate"]), 2)` in the \texttt{lung} data
   \end{itemize}
   \end{column}
 \end{columns}
@@ -747,7 +747,7 @@ haz_plot_2 <- haz_plot
 
 haz_plot_2$plot <- haz_plot_2$plot + 
   annotate("text", x = 0, y = 3, label = glue::glue(
-    "The hazard ratio for males\nversus females with respect\nto hazard of death ", 
+    "The hazard of death\nfor males versus females\n", 
     "is {round(exp(broom::tidy(cph4)['estimate']), 2)}."), 
     col = msk_palette("contrast")[12], size = 4, hjust = 0)
   
@@ -763,10 +763,23 @@ ggsave("./img/haz_plot_2.png", haz_plot_2$plot, width = 3.5, height = 3.5)
 \begin{itemize}
   \setlength\itemsep{1em}
     \item HR = 0.5 would mean that at any particular time, half as many females as males are dying
-    \item So our HR = `r round(exp(broom::tidy(cph4)['estimate']), 2)` implies that around 0.4 times as many females are dying as males, at any given time
+    \item So our HR = `r round(exp(broom::tidy(cph4)['estimate']), 2)` implies that around 0.6 times as many females are dying as males, at any given time
   \end{itemize}
   \end{column}
 \end{columns}
+
+
+## Put it all together into an interpretable, reproducible report for your collaborator
+
+```{r}
+ggsave("./img/haz_plot_3.png", haz_plot_2$plot, width = 5, height = 3.5)
+```
+
+\begin{center}
+    \includegraphics[scale = 0.6]{haz_plot_3}
+\end{center}
+
+The hazard ratio of `r round(exp(broom::tidy(cph4)['estimate']), 2)` implies that around 0.6 times as many females are dying as males, at any given time.
 
 
 ## Essential R packages 
