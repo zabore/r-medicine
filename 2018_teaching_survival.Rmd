@@ -1,5 +1,5 @@
 ---
-title: "Tips and Tricks for Communicating Survival Analysis Results to Clinical Collaborators"
+title: "Teaching Survival Analysis to Clinical Collaborators"
 author: "Emily C. Zabor"
 institute: "R/Medicine Conference"
 date: "September 7, 2018"
